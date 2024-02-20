@@ -1,0 +1,246 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ASP.NET Chat</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        main {
+            display: flex;
+            justify-content: space-between;
+            height: 100vh;
+            align-items: stretch;
+        }
+
+        fieldset {
+            margin: 10px;
+            width: calc(50% - 15px);
+        }
+
+        fieldset.form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        fieldset.form > form > * {
+            margin: 5px 0;
+        }
+
+        #chat {
+            height: 100%;
+            width: 100%;
+            overflow: auto;
+        }
+
+        button, input {
+            width: 100%;
+            padding: 5px;
+        }
+
+        button#send {
+            cursor: pointer;
+            margin-top: 25px;
+            height: 50px;
+        }
+
+        button#send:disabled {
+            cursor: not-allowed;
+        }
+
+        .message-block > h3,
+        .message-block > small {
+            padding: 0 5px;
+        }
+
+        .message-block > div {
+            max-width: 80%;
+            padding: 5px;
+            border: 1px solid lightgray;
+            border-radius: 5px;
+            word-wrap: break-word;
+            word-break: break-all;
+            background-color: #eaeaea;
+        }
+
+        .message-block > small {
+            color: #323232;
+        }
+
+        @media screen and (max-width: 768px){
+            main {
+                flex-direction: column-reverse;
+                justify-content: stretch;
+                align-items: center;
+                height: auto;
+            }
+
+            fieldset {
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+
+            .message-block > div {
+                max-width: 100%;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<main>
+    <fieldset class="content">
+        <legend>Chat</legend>
+        <div id="chat"></div>
+    </fieldset>
+    <fieldset class="form">
+        <legend>New message</legend>
+        <form>
+            <label for="author">Username</label>
+            <input id="author" name="author" type="text" maxlength="40" required>
+            <label for="message">Message</label>
+            <input id="message" name="message" type="text" maxlength="40" required>
+            <button id="send" type="button" disabled>SEND</button>
+        </form>
+    </fieldset>
+</main>
+<script !src="">
+    const urlRoot = window.location.origin + '/api/chat';
+
+    const authorInput = document.getElementById('author');
+    const messageInput = document.getElementById('message');
+    const sendButton = document.getElementById('send');
+    const chat = document.getElementById('chat');
+
+    let MESSAGES_STORE = [];
+
+    window.onload = () => {
+
+        getMessages();
+
+        setTimeout(function run() {
+            getMessages();
+            setTimeout(run, 3000);
+        }, 3000);
+
+        messageInput.addEventListener('input', (event) => {
+            sendButton.disabled = !messageInput.value.length;
+        });
+
+        messageInput.addEventListener('focus', (event) => {
+            sendButton.disabled = !messageInput.value.length;
+        });
+
+        messageInput.addEventListener('blur', (event) => {
+            sendButton.disabled = !messageInput.value.length;
+        });
+
+        authorInput.addEventListener('blur', (event) => {
+            if (authorInput.value.length) {
+                authorInput.disabled = true;
+                chat.innerHTML = '';
+                renderMessages(MESSAGES_STORE);
+            }
+        })
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                submitForm();
+            }
+        });
+
+        sendButton.addEventListener('click', (event) => {
+            submitForm();
+        });
+    }
+
+    function submitForm() {
+        if (authorInput.value.length) {
+            axios({
+                method: 'post',
+                url: urlRoot,
+                data: {
+                    Id: Date.now().toString(),
+                    Author: authorInput.value,
+                    Text: messageInput.value.slice(0, 40),
+                    Date: Date.now()
+                }
+            }).then(response => {
+                console.log(response);
+                getNewMessages(response.data);
+                messageInput.value = '';
+            }).catch(error => {
+                console.log(error);
+            });
+        }
+    }
+    
+    function getMessages() {
+        axios({
+            method: 'get',
+            url: urlRoot
+        }).then(response => {
+            console.log(response);
+            getNewMessages(response.data);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+    
+    function getNewMessages(data) {
+        const numberOfNew = data.length - MESSAGES_STORE.length;
+        if (numberOfNew) {
+            MESSAGES_STORE = data;
+            renderMessages(data.slice(-numberOfNew));
+        }
+    }
+
+    function renderMessages(messages) {
+        messages.forEach((message) => {
+            const messageBlock = document.createElement('DIV');
+            messageBlock.classList.add('message-block');
+
+            if (message.author === authorInput.value) {
+                messageBlock.classList.add('right')
+            }
+
+            const name = document.createElement('h3');
+            name.innerText = message.author;
+            messageBlock.appendChild(name);
+            const text = document.createElement('DIV');
+            text.innerText = message.text;
+            messageBlock.appendChild(text);
+            const date = document.createElement('SMALL');
+            date.innerText = convertDate(message.date);
+            messageBlock.appendChild(date);
+            chat.prepend(messageBlock);
+        });
+    }
+
+    function convertDate(dateVal) {
+        const dateTime = new Date(dateVal);
+        const date = fixDate(dateTime.getDay());
+        const month = fixDate(dateTime.getMonth() + 1);
+        const year = dateTime.getFullYear();
+        const hours = fixDate(dateTime.getHours());
+        const minutes = fixDate(dateTime.getMinutes());
+        const seconds = fixDate(dateTime.getSeconds());
+
+        return `${date}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function fixDate(date) {
+        const newDate = date.toString().length < 2 ? ('0' + date) : date;
+        return newDate.toString();
+    }
+</script>
+</body>
+</html>

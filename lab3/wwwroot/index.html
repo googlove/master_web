@@ -1,0 +1,112 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>WebServiceCalc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        fieldset {
+            margin: 10px;
+        }
+
+        fieldset > form > * {
+            display: block;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        button, input {
+            width: 300px;
+            padding: 5px;
+        }
+
+        button {
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:first-of-type {
+            margin-top: 20px;
+        }
+
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<fieldset>
+    <legend>Калькулятор на основі веб-серсісу, створеного засобами ASP.NET</legend>
+    <form>
+        <label for="firstNum">First number</label>
+        <input type="number" name="firstNum" id="firstNum" required>
+        <label for="secondNum">Second number</label>
+        <input type="number" name="secondNum" id="secondNum" required>
+        <button type="button" id="add">Add</button>
+        <button type="button" id="subtract">Subtract</button>
+        <button type="button" id="multiply">Multiply</button>
+        <button type="button" id="divide">Divide</button>
+    </form>
+</fieldset>
+<fieldset>
+    <legend>Results</legend>
+    <div id="result"></div>
+</fieldset>
+
+<script !src="">
+    const urlRoot = window.location.origin + '/WebServiceCalc/';
+
+    const firstNumInput = document.getElementById('firstNum');
+    const secondNumInput = document.getElementById('secondNum');
+    const addButton = document.getElementById('add');
+    const subtractButton = document.getElementById('subtract');
+    const multiplyButton = document.getElementById('multiply');
+    const divideButton = document.getElementById('divide');
+    const result = document.getElementById('result');
+
+    window.onload = () => {
+        addButton.addEventListener('click', (event) => {
+            buttonListener('add');
+        });
+        subtractButton.addEventListener('click', (event) => {
+            buttonListener('subtract');
+        });
+        multiplyButton.addEventListener('click', (event) => {
+            buttonListener('multiply');
+        });
+        divideButton.addEventListener('click', (event) => {
+            buttonListener('divide');
+        });
+    }
+
+    function buttonListener(url) {
+        firstNumInput.value = firstNumInput.value ? secondNumInput.value : 0;
+        secondNumInput.value = secondNumInput.value ? secondNumInput.value : 0;
+        const newUrl = `${url}/${firstNumInput.value}/${secondNumInput.value}`;
+        makeRequest(newUrl);
+    }
+
+    function makeRequest(url) {
+        axios({
+            method: 'get',
+            url: `${urlRoot}${url}`
+        }).then(response => {
+            console.log(response);
+            const newP = document.createElement('P');
+            newP.innerText = response.data;
+            result.appendChild(newP);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "C:\\Users\\flame4ost\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\flame4ost\\.nuget\\packages"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+"version": 2,
+"name": "backend",
+"builds": [{ "src": "crud.js", "use": "@vercel/node" }],
+"routes": [{ "src": "/(.*)", "dest":"/crud.js"}]
+}
